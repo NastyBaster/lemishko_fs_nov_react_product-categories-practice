@@ -17,6 +17,8 @@ export const App = () => {
   const [selectedUserId, setSelectedUserId] = useState(0);
   const [query, setQuery] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [sortBy, setSortBy] = useState('');
+  const [sortOrder, setSortOrder] = useState(null);
 
   const visibleProducts = preparedProducts.filter(product => {
     const matchesUser =
@@ -37,6 +39,8 @@ export const App = () => {
     setSelectedUserId(0);
     setQuery('');
     setSelectedCategoryIds([]);
+    setSortBy('');
+    setSortOrder(null);
   };
 
   const toggleCategory = (e, categoryId) => {
@@ -48,6 +52,57 @@ export const App = () => {
 
       return [...currentIds, categoryId];
     });
+  };
+
+  const sortedProducts = [...visibleProducts].sort((a, b) => {
+    if (!sortBy) return 0;
+
+    let valueA;
+    let valueB;
+
+    switch (sortBy) {
+      case 'id':
+        valueA = a.id;
+        valueB = b.id;
+        break;
+      case 'name':
+        valueA = a.name.toLowerCase();
+        valueB = b.name.toLowerCase();
+        break;
+      case 'category':
+        valueA = a.category?.title.toLowerCase();
+        valueB = b.category?.title.toLowerCase();
+        break;
+      case 'user':
+        valueA = a.user?.name.toLowerCase();
+        valueB = b.user?.name.toLowerCase();
+        break;
+      default:
+        return 0;
+    }
+
+    if (valueA < valueB) return sortOrder === 'asc' ? -1 : 1;
+    if (valueA > valueB) return sortOrder === 'asc' ? 1 : -1;
+
+    return 0;
+  });
+
+  const handleSort = field => {
+    if (sortBy !== field) {
+      setSortBy(field);
+      setSortOrder('asc');
+    } else if (sortOrder === 'asc') {
+      setSortOrder('desc');
+    } else {
+      setSortBy('');
+      setSortOrder(null);
+    }
+  };
+
+  const getSortIcon = field => {
+    if (sortBy !== field) return 'fa-sort';
+
+    return sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
   };
 
   return (
@@ -119,7 +174,7 @@ export const App = () => {
               <a
                 href="#/"
                 data-cy="AllCategories"
-                className={`button mr-6 is-outlined ${selectedCategoryIds.length === 0 ? 'is-success' : ''}`}
+                className={`button mr-6 ${selectedCategoryIds.length === 0 ? 'is-success' : 'is-outlined'}`}
                 onClick={e => {
                   e.preventDefault();
                   setSelectedCategoryIds([]);
@@ -169,39 +224,78 @@ export const App = () => {
                   <th>
                     <span className="is-flex is-flex-wrap-nowrap">
                       ID
-                      <a href="#/">
+                      <a
+                        href="#/"
+                        onClick={e => {
+                          e.preventDefault();
+                          handleSort('id');
+                        }}
+                      >
                         <span className="icon">
-                          <i data-cy="SortIcon" className="fas fa-sort" />
+                          <i
+                            data-cy="SortIcon"
+                            className={`fas ${getSortIcon('id')}`}
+                          />
                         </span>
                       </a>
                     </span>
                   </th>
+
                   <th>
                     <span className="is-flex is-flex-wrap-nowrap">
                       Product
-                      <a href="#/">
+                      <a
+                        href="#/"
+                        onClick={e => {
+                          e.preventDefault();
+                          handleSort('name');
+                        }}
+                      >
                         <span className="icon">
-                          <i data-cy="SortIcon" className="fas fa-sort" />
+                          <i
+                            data-cy="SortIcon"
+                            className={`fas ${getSortIcon('name')}`}
+                          />
                         </span>
                       </a>
                     </span>
                   </th>
+
                   <th>
                     <span className="is-flex is-flex-wrap-nowrap">
                       Category
-                      <a href="#/">
+                      <a
+                        href="#/"
+                        onClick={e => {
+                          e.preventDefault();
+                          handleSort('category');
+                        }}
+                      >
                         <span className="icon">
-                          <i data-cy="SortIcon" className="fas fa-sort" />
+                          <i
+                            data-cy="SortIcon"
+                            className={`fas ${getSortIcon('category')}`}
+                          />
                         </span>
                       </a>
                     </span>
                   </th>
+
                   <th>
                     <span className="is-flex is-flex-wrap-nowrap">
                       User
-                      <a href="#/">
+                      <a
+                        href="#/"
+                        onClick={e => {
+                          e.preventDefault();
+                          handleSort('user');
+                        }}
+                      >
                         <span className="icon">
-                          <i data-cy="SortIcon" className="fas fa-sort" />
+                          <i
+                            data-cy="SortIcon"
+                            className={`fas ${getSortIcon('user')}`}
+                          />
                         </span>
                       </a>
                     </span>
@@ -209,7 +303,7 @@ export const App = () => {
                 </tr>
               </thead>
               <tbody>
-                {visibleProducts.map(product => (
+                {sortedProducts.map(product => (
                   <tr data-cy="Product" key={product.id}>
                     <td className="has-text-weight-bold" data-cy="ProductId">
                       {product.id}
